@@ -1,4 +1,4 @@
-# Satellite_modell
+# Satellite_model
 # Main Tasks
 
 ## Constructing a Wealth Index from 43 DHS surveys (2009-2016 23 countries of Africa)
