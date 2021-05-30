@@ -6,7 +6,7 @@ import copy
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-import tensorflow.io as tfio
+#import tensorflow.io as tfio
 
 dirpath = 'D:/satellite/data/nightlight'
 exportpath = 'D:/satellite/data/nightlightrightres/'
