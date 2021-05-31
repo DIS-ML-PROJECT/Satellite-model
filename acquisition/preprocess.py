@@ -46,7 +46,6 @@ dirpath = 'D:/satellite/data/nightlight'
 exportpath = 'D:/satellite/data/tfrecords/'
 
 onlyfiles = [f for f in listdir(dirpath) if isfile(join(dirpath, f))]
-onlyfiles = onlyfiles[:10]
 csvpath = os.path.abspath(os.path.join(os.path.abspath(__file__),"../../dataResearch/firstSample.csv"))
 df = pd.read_csv(csvpath)
 for i in onlyfiles:
