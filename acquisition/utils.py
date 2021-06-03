@@ -1,3 +1,14 @@
+#Enable Google Drive
+#needs credentials.json if used for the first use or token.json if used for recurrent uses
+#import libraries
+import os.path
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+#Import different libraries
+import io
+from googleapiclient.http import MediaIoBaseDownload
 from typing import Tuple
 from datetime import date
 import ee
@@ -77,3 +88,51 @@ def point_to_box_coords(aoi: ee.Geometry,dimensionradius: int) -> list:
     buffer = aoi.buffer(dimensionradius)
     box = buffer.bounds()
     return box.coordinates().getInfo()
+
+def download_file(file_id, filename):
+    request = service.files().get_media(fileId=file_id)
+    fh = io.FileIO(filename, 'wb')
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while done is False:
+        status, done = downloader.next_chunk()
+        print('Download done')
+
+def export(i):
+
+
+    creds = None
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json',['https://www.googleapis.com/auth/drive'])
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', ['https://www.googleapis.com/auth/drive'])
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
+
+    service = build('drive', 'v3', credentials=creds)
+    # Call the Drive v3 API
+    dirpath = '../data'
+    os.makedirs(dirpath,exist_ok=True)
+    while len([name for name in os.listdir(dirpath)]) != i:
+        results = service.files().list(q="mimeType='image/tiff'",spaces='drive',
+                                            fields='nextPageToken, files(id, name)',
+                                            pageToken=None).execute()
+        items = results.get('files', [])
+        for item in items:
+            file_id = item.get('id')
+            filename = item.get('name')
+            print("Download " + str(filename))
+            download_file(item['id'], item['name'])
+            service.files().delete(fileId=file_id).execute()
+            os.replace(filename,dirpath + "/" + filename)
+            print(str(len([name for name in os.listdir(dirpath)]))+ "/" + str(len(df)))
