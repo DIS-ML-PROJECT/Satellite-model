@@ -11,6 +11,7 @@ import io
 from googleapiclient.http import MediaIoBaseDownload
 from typing import Tuple
 from datetime import date
+import time
 import ee
 
 def surveyyear_to_range(year: int,satellitename: str) -> Tuple[str, str]:
@@ -89,16 +90,7 @@ def point_to_box_coords(aoi: ee.Geometry,dimensionradius: int) -> list:
     box = buffer.bounds()
     return box.coordinates().getInfo()
 
-def download_file(file_id, filename):
-    request = service.files().get_media(fileId=file_id)
-    fh = io.FileIO(filename, 'wb')
-    downloader = MediaIoBaseDownload(fh, request)
-    done = False
-    while done is False:
-        status, done = downloader.next_chunk()
-        print('Download done')
-
-def export(i):
+def export(i,df,dirpath):
 
 
     creds = None
@@ -121,7 +113,6 @@ def export(i):
 
     service = build('drive', 'v3', credentials=creds)
     # Call the Drive v3 API
-    dirpath = '../data'
     os.makedirs(dirpath,exist_ok=True)
     while len([name for name in os.listdir(dirpath)]) != i:
         results = service.files().list(q="mimeType='image/tiff'",spaces='drive',
@@ -132,7 +123,14 @@ def export(i):
             file_id = item.get('id')
             filename = item.get('name')
             print("Download " + str(filename))
-            download_file(item['id'], item['name'])
-            service.files().delete(fileId=file_id).execute()
-            os.replace(filename,dirpath + "/" + filename)
-            print(str(len([name for name in os.listdir(dirpath)]))+ "/" + str(len(df)))
+            request = service.files().get_media(fileId=file_id)
+        fh = io.FileIO(filename, 'wb')
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            print('Download done')
+        service.files().delete(fileId=file_id).execute()
+        time.sleep(2)
+        os.replace(filename,dirpath + "/" + filename)
+        print(str(len([name for name in os.listdir(dirpath)]))+ "/" + str(len(df)))
