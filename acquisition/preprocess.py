@@ -2,6 +2,7 @@ from PIL import Image
 import os
 from os import listdir
 from os.path import isfile, join
+from numpy.core.defchararray import count
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -66,29 +67,75 @@ def serialize_example(nparray,wealth,wealthpooled,wealthpooled5country,country,u
   example_proto = tf.train.Example(features=tf.train.Features(feature=feature))
   return example_proto.SerializeToString()
 
-#
+#CONSTANTS
 dirpath = 'D:/satellite/data/nightlight'
 exportpath = 'D:/satellite/data/tfrecords/'
 
-onlyfiles = [f for f in listdir(dirpath) if isfile(join(dirpath, f))]
-onlyfiles = onlyfiles[:10]
-csvpath = os.path.abspath(os.path.join(os.path.abspath(__file__),"../../dataResearch/firstSample.csv"))
-df = pd.read_csv(csvpath)
-for i in onlyfiles:
-    imgfile = dirpath + "/" + i
-    with open(imgfile,'rb') as f:
-        image = Image.open(f)
-        image.load()
-        image = image.resize((1050, 1050))
-        imagearray = np.array(image.getdata())
-        #Normalizing
-        normalizedimagearray = stats.zscore(imagearray)
-        #Get additional Features from CSV-File
-        labelname = i.replace(".tif","")
-        wealth = float(df["wealth"].at[df.ID[df.ID == labelname].index[0]].replace(",","."))
-        with tf.io.TFRecordWriter(exportpath + labelname + '.tfrec') as writer:
-            example = serialize_example(nparray=normalizedimagearray,wealth=wealth)
-            writer.write(example)
-        f.close()
-        image.close()
-    print(str(onlyfiles.index(i)+1) + "/" + str(len(onlyfiles)))
+def minmax():
+  onlyfiles = [f for f in listdir(dirpath) if isfile(join(dirpath, f))]
+  for i in onlyfiles:
+        imgfile = dirpath + "/" + i
+        with open(imgfile,'rb') as f:
+            image = Image.open(f)
+            image = image.resize((1050, 1050))
+            imagearray = np.array(image.getdata())
+            imgmin = np.amin(imagearray)
+            imgmax = np.amax(imagearray)
+            if "min" not in globals():
+              global min
+              min = imgmin
+            else:
+              if imgmin < min:
+                min = imgmin
+            if "max" not in globals():
+              global max
+              max = imgmax
+            else:
+              if imgmax > max:
+                max = imgmax
+            print(i + " geladen.")
+  return min,max
+
+def preprocess():
+  """[summary]
+  """
+  onlyfiles = [f for f in listdir(dirpath) if isfile(join(dirpath, f))]
+  csvpath = os.path.abspath(os.path.join(os.path.abspath(__file__),"../../dataResearch/Data_with_Pooled.csv"))
+  df = pd.read_csv(csvpath)
+  min,max = minmax()
+  for i in onlyfiles:
+      imgfile = dirpath + "/" + i
+      with open(imgfile,'rb') as f:
+          image = Image.open(f)
+          image.load()
+          image = image.resize((1050, 1050))
+          imagearray = np.array(image.getdata())
+          #Normalized
+          normalizedimagearray = (imagearray-min)/(max-min)
+          #Get additional Features from CSV-File
+          labelname = i.replace(".tif","")
+          index = df.ID[df.ID == labelname].index
+          wealthpooled = float(df['wealthpooled'].loc[index].max().replace(",","."))
+          wealthpooled5country = float(df['wealthpooled5country'].loc[index].max().replace(",","."))
+          country = bytes(df['country'].loc[index].max(), 'utf-8')
+          urbanrural = bytes(df['URBAN_RURA'].loc[index].max(), 'utf-8')
+          csvlat = float(df['LATNUM'].loc[index].max().replace(",","."))
+          csvlon = float(df['LONGNUM'].loc[index].max().replace(",","."))
+          year = int(df['year'].loc[index].max())
+          wealth = float(df['wealth'].loc[index].max().replace(",","."))
+          with tf.io.TFRecordWriter(exportpath + labelname + '.tfrec') as writer:
+              example = serialize_example(nparray=normalizedimagearray,
+                                          wealth=wealth,
+                                          wealthpooled=wealthpooled,
+                                          wealthpooled5country=wealthpooled5country,
+                                          country=country,
+                                          urbanrural=urbanrural,
+                                          lon_coord=csvlon,
+                                          lat_coord=csvlat,
+                                          year=year)
+              writer.write(example)
+          f.close()
+          image.close()
+      print(str(onlyfiles.index(i)+1) + "/" + str(len(onlyfiles)))
+
+preprocess()
