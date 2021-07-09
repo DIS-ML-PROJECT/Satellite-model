@@ -1,12 +1,15 @@
 from PIL import Image
 import os
 from os import listdir
-from os.path import isfile, join
-from numpy.core.defchararray import count
+from os.path import join
+from numpy.core.defchararray import endswith
 import pandas as pd
 import numpy as np
 import tensorflow as tf
 import scipy.stats as stats
+import io
+from osgeo import gdal
+import time
 
 # SELFMADE AND IN TESTING
 
@@ -21,8 +24,8 @@ def _dtype_feature(ndarray):
         else:  
             raise ValueError("The input should be numpy ndarray. \
                                Instead got {}".format(ndarray.dtype))
-# from Tensorflow doc
 
+# from Tensorflow doc
 def _float_feature(value):
   """Returns a float_list from a float / double."""
   return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
@@ -68,43 +71,58 @@ def serialize_example(nparray,wealth,wealthpooled,wealthpooled5country,country,u
   return example_proto.SerializeToString()
 
 #CONSTANTS
-dirpath = 'D:/satellite/data/nightlight'
+nlpath = 'D:/sciebo/nightlight'
+s2path = 'D:/sciebo/Sentinel'
 exportpath = 'D:/satellite/data/tfrecords/'
-
+##
 def minmax():
-  onlyfiles = [f for f in listdir(dirpath) if isfile(join(dirpath, f))]
-  for i in onlyfiles:
-        imgfile = dirpath + "/" + i
-        with open(imgfile,'rb') as f:
-            image = Image.open(f)
-            image = image.resize((1050, 1050))
-            imagearray = np.array(image.getdata())
-            imgmin = np.amin(imagearray)
-            imgmax = np.amax(imagearray)
-            if "min" not in globals():
-              global min
-              min = imgmin
-            else:
-              if imgmin < min:
-                min = imgmin
-            if "max" not in globals():
-              global max
-              max = imgmax
-            else:
-              if imgmax > max:
-                max = imgmax
-            print(i + " geladen.")
-  return min,max
+    minmaxlist = []
+    s2files = [f for f in listdir(s2path) if endswith(join(s2path, f),".tif")==True]
+    for i in s2files:
+        start = time.time()
+        nlfile = nlpath + "/" + i
+        s2file = s2path+"/"+i
+        s2raster = gdal.Open(s2file) 
+        for n in range(s2raster.RasterCount):
+            f = n + 1
+            s2band = s2raster.GetRasterBand(f)
+            s2band = s2band.ReadAsArray()
+            s2band = np.resize(s2band,(1050,1050))
+            min = s2band.min()
+            max = s2band.max()
+            if len(minmaxlist) < s2raster.RasterCount + 1:
+                s2minmax = [min,max]
+                minmaxlist.append(s2minmax)
+            elif min < minmaxlist[n][0]:
+                minmaxlist[n][0] = min
+            if max > minmaxlist[n][1]:
+                minmaxlist[n][1] = max
+        nlraster = gdal.Open(nlfile)
+        nlband = nlraster.GetRasterBand(1)
+        nlband = nlband.ReadAsArray()
+        nlband = np.resize(nlband,(1050,1050))
+        nlmin = nlband.min()
+        nlmax = nlband.max()
+        if len(minmaxlist) < s2raster.RasterCount + 1:
+            nlminmax = [nlmin,nlmax]
+            minmaxlist.append(nlminmax)
+        elif nlmin < minmaxlist[16][0]:
+            minmaxlist[16][0] = nlmin
+        if nlmax > minmaxlist[16][1]:
+            minmaxlist[16][1] = nlmax
+        end = time.time()
+        print(str(s2files.index(i)+1) + "/" + str(len(s2files)),"Time elapsed:",round(end - start,2),"sec")
+    return minmaxlist
 
 def preprocess():
   """[summary]
   """
-  onlyfiles = [f for f in listdir(dirpath) if isfile(join(dirpath, f))]
+  onlyfiles = [f for f in listdir(s2path) if endswith(join(s2path, f),".tif")]
   csvpath = os.path.abspath(os.path.join(os.path.abspath(__file__),"../../dataResearch/Data_with_Pooled.csv"))
   df = pd.read_csv(csvpath)
-  min,max = minmax()
+  minmaxlist = minmax()
   for i in onlyfiles:
-      imgfile = dirpath + "/" + i
+      imgfile = s2path + "/" + i
       with open(imgfile,'rb') as f:
           image = Image.open(f)
           image.load()
@@ -138,4 +156,4 @@ def preprocess():
           image.close()
       print(str(onlyfiles.index(i)+1) + "/" + str(len(onlyfiles)))
 
-preprocess()
+minmax()
