@@ -77,6 +77,7 @@ exportpath = 'D:/satellite/data/tfrecords/'
 ##
 def minmax():
     minmaxlist = []
+    timelist = []
     s2files = [f for f in listdir(s2path) if endswith(join(s2path, f),".tif")==True]
     for i in s2files:
         start = time.time()
@@ -111,7 +112,8 @@ def minmax():
         if nlmax > minmaxlist[16][1]:
             minmaxlist[16][1] = nlmax
         end = time.time()
-        print(str(s2files.index(i)+1) + "/" + str(len(s2files)),"Time elapsed:",round(end - start,2),"sec")
+        timelist.append(end-start)
+        print(str(s2files.index(i)+1) + "/" + str(len(s2files)),"Avg. time left:",int(sum(timelist)/len(timelist)*(len(s2files)-s2files.index(i)+1)/60),"min")
     return minmaxlist
 
 def preprocess():
