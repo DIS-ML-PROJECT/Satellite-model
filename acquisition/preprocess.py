@@ -101,9 +101,9 @@ def serialize_example(B1,B2,B3,B4,B5,B6,B7,B8,B8A,B9,B10,B11,B12,NL,wealth,wealt
   return example_proto.SerializeToString()
 
 #CONSTANTS
-nlpath = 'D:/sciebo/nightlight'
-s2path = 'D:/sciebo/Sentinel'
-exportpath = 'D:/sciebo/s2tfrec'
+nlpath = 'E:/sciebo/nightlight'
+s2path = 'E:/sciebo/Sentinel'
+exportpath = 'E:/sciebo/s2tfrec'
 ##
 def minmax():
     minmaxlist = []
@@ -219,6 +219,7 @@ def preprocess():
           writer.write(example)
       end = time.time()
       timelist.append(end-start)
-      print("Step 2/2",str(s2files.index(i)+1) + "/" + str(len(s2files)),"Est. time left:",time.strftime('%H:%M:%S',time.gmtime(int(sum(timelist)/len(timelist)*(len(s2files)-s2files.index(i))))))
+      print("Done!",str(s2files.index(i)+1) + "/" + str(len(s2files)),"Est. time left:",time.strftime('%d:%H:%M:%S',time.gmtime(int(sum(timelist)/len(timelist)*(len(s2files)-s2files.index(i))))))
 
-preprocess()
+if __name__ == '__main__':
+    preprocess()
