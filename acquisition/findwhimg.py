@@ -33,7 +33,7 @@ for i in s2files:
     indexlist.extend([item for sublist in glist for item in sublist])
     indexlist.extend([item for sublist in blist for item in sublist])
     pwhite = len(list(set(indexlist)))/(1050*1050)
-    if pwhite > 0.1:
+    if pwhite > 0.2:
         name = i.replace('.tif','')
         namelist.append(name)
     end = time.time()
@@ -41,5 +41,5 @@ for i in s2files:
     print(str(s2files.index(i)+1) + "/" + str(len(s2files)),time.strftime('%H:%M:%S',time.gmtime(int(sum(timelist)/len(timelist)*(len(s2files)-s2files.index(i))))))
     df = pd.read_csv(os.path.abspath(os.path.join(os.path.abspath(__file__),"../../dataResearch/firstSample.csv")))
     df = df[['ID','LATNUM','LONGNUM']]
-    df = df[~df['ID'].isin(namelist)]
+    df = df[df['ID'].isin(namelist)]
     df.to_csv('blacklist.csv')
