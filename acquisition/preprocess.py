@@ -50,6 +50,10 @@ def serialize_example(B1,B2,B3,B4,B5,B6,B7,B8,B8A,B9,B10,B11,B12,NL,wealth,wealt
   """
   # Create a dictionary mapping the feature name to the tf.train.Example-compatible
   # data type.
+  #comment: hier koennten Sie alle Satellitenbaender als liste importieren und per for-Schleife einfuegen
+  #Vorteil: Kompakter und weniger Fehleranfaellig
+  #Alternativ koennten Sie auch alle Variablen als Liste oder *args importieren und anhand der Datentypen die Datentypen fuer TFRecord bestimmen
+  #Vorteil: Viel genereller und auf andere Dinge uebertragbar
   feature = {
       #Band 1: Aerosols
       'Band 1': _dtype_feature(B1),
@@ -193,6 +197,7 @@ def preprocess():
       max = minmaxlist[13][1]
       nlband = (nlband-min)/(max-min)
       bandlist.append(nlband)
+      #comment: Hier das gleiche wie oben: Sie entpacken erst alle Baender um Sie dann haendisch wieder zuzuordnen (sehr fehleranfaellig und Platz verschwendend)
       with tf.io.TFRecordWriter(exportpath + '/' + labelname + '.tfrec') as writer:
           example = serialize_example(B1=bandlist[0],
                                       B2=bandlist[1],
