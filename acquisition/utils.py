@@ -14,7 +14,10 @@ from datetime import date
 import time
 import ee
 
+#Achten Sie auf Leerzeichen zwischen Variablen
 def surveyyear_to_range(year: int,satellitename: str) -> Tuple[str, str]:
+    #comment: Was mir hier nicht gefaellt ist, dass Sie Randbedingungen nicht abdecken: ein Jahr 2022 gibt es nicht. 
+    #Gut finde ich dagegen das raisen einer Exception
     if satellitename == "S2":
         if 2012<=year<=2015:
             start_date = '2015-06-24'
@@ -40,6 +43,18 @@ def surveyyear_to_range(year: int,satellitename: str) -> Tuple[str, str]:
         else:
             raise ValueError(f'Jahr wird nicht unterstützt: {year}. '
                             'Alle Jahre vor 2012 werden nicht beachtet.')
+#     #Alternativvorschlag (kuerzer und Zukunftskompatibel - Achtung! nicht getestet!)
+#     if satellitename == "S2":
+#         start_date = str(year) + '-01-01'
+#         end_date = str(year + 1) + '-01-01'
+#         #S2 mission started in 2015-06-24 so add this exception ensuring a whole year of data
+#         if year <= 2015:
+#             start_date = '2015-06-24'
+#             end_date = '2016-07-01'
+#             if year < 2015:
+#                print('Warning: S2 mission began on 2015-06-24, getting data from', start_date, 'to', end_date, '(Your year is', year, ')'
+#                #Sauberer waere dies mit dem Warning module und es ausschaltbar zu machen!
+
     elif satellitename == "nl":
         if year == 2012:
             start_date = '2012-01-01'
