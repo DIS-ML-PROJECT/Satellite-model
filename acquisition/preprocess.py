@@ -58,7 +58,7 @@ def serialize_example(B1,B2,B3,B4,B5,B6,B7,B8,B8A,B9,B10,B11,B12,NL,wealth,wealt
       #Band 1: Aerosols
       'Band 1': _dtype_feature(B1),
       #Band 2: Blue
-      'Band 2': _dtype_feature(B3),
+      'Band 2': _dtype_feature(B2),
       #Band 3: Green
       'Band 3': _dtype_feature(B3),
       #Band 4: Green
@@ -107,7 +107,7 @@ def serialize_example(B1,B2,B3,B4,B5,B6,B7,B8,B8A,B9,B10,B11,B12,NL,wealth,wealt
 #CONSTANTS
 nlpath = 'E:/sciebo/nightlight'
 s2path = 'E:/sciebo/Sentinel'
-exportpath = 'E:/sciebo/s2tfrec'
+exportpath = 'E:/sciebo/tfrecords'
 ##
 def minmax():
     minmaxlist = []
