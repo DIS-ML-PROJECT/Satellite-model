@@ -2,3 +2,4 @@ acquisition/credentials.json
 acquisition/token.json
 acquisition/__pycache__/utils.cpython-38.pyc
 data/
+comments.md
